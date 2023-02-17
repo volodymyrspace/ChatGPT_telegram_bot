@@ -1,3 +1,6 @@
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -60,6 +63,7 @@ coverage.xml
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+db.db
 
 # Flask stuff:
 instance/
@@ -109,6 +113,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env.dev
+.env.prod
 
 # Spyder project settings
 .spyderproject
@@ -127,3 +133,25 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Папки, создаваемые средой разработки
+.idea
+.DS_Store
+.AppleDouble
+.LSOverride
+
+*.sublime-project
+*.sublime-workspace
+
+.vscode/
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/
+
+.mypy_cache
+
+# папки со статикой и медиа
+static/
+posts/static/
+media/

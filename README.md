@@ -15,7 +15,7 @@ Create and activate environment:
 ```
 python3 -m venv env
 or
-py -3.7 -m venv env
+py -3.10 -m venv env
 ```
 
 If you have Linux/macOS

@@ -1,5 +1,6 @@
 # ChatGPT_telegram_bot
-Telegram bot with ChatGPT model by OpenAI
+Telegram bot with ChatGPT model by OpenAI (Example running here https://t.me/ChatGPT_ForTelegramBot)
+
 
 How to run:
 

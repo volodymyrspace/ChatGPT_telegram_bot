@@ -79,7 +79,7 @@ def make_request(message):
         engine=engine,
         prompt=message.text,
         temperature=0.5,
-        max_tokens=4000,
+        max_tokens=3500,
     )
     list_of_answers = check_length(completion.choices[0]["text"], [])
     for piece_of_answer in list_of_answers:

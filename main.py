@@ -5,7 +5,7 @@ import telebot
 from requests.exceptions import ReadTimeout
 
 env = {
-    **dotenv_values(".env.prod"),
+    **dotenv_values("/home/ChatGPT_telegram_bot/.env.prod"),
     **dotenv_values(".env.dev"),  # override
 }
 
@@ -64,6 +64,15 @@ def write_to_db(message):
     cursor.close()
 
 
+def check_length(answer, list_of_answers):
+    if len(answer) > 4090 and len(answer) < 409000:
+        list_of_answers.append(answer[0:4090] + "...")
+        check_length(answer[4091:], list_of_answers)
+    else:
+        list_of_answers.append(answer[0:])
+        return list_of_answers
+
+
 @bot.message_handler(commands=["start"])
 def send_start(message):
     text = """Приветствую ✌
@@ -90,9 +99,11 @@ def send_msg_to_chatgpt(message):
             engine=engine,
             prompt=message.text,
             temperature=0.5,
-            max_tokens=1000,
+            max_tokens=2048,
         )
-        bot.send_message(message.chat.id, completion.choices[0]["text"])
+        list_of_answers = check_length(completion.choices[0]["text"], [])
+        for piece_of_answer in list_of_answers:
+            bot.send_message(message.chat.id, piece_of_answer)
     except openai.error.RateLimitError:
         bot.send_message(
             message.chat.id,

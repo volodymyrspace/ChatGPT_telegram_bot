@@ -93,8 +93,11 @@ def make_request(message):
         max_tokens=3100,
     )
     list_of_answers = check_length(completion.choices[0]["text"], [])
-    for piece_of_answer in list_of_answers:
-        bot.send_message(message.chat.id, piece_of_answer)
+    if list_of_answers:
+        for piece_of_answer in list_of_answers:
+            bot.send_message(message.chat.id, piece_of_answer)
+    else:
+        make_request(message)
 
 
 @bot.message_handler(commands=["start"])

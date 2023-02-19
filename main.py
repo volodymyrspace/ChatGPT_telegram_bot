@@ -9,7 +9,7 @@ env = {
     **dotenv_values(".env.dev"),  # override
 }
 
-openai.api_key = env["API_KEY_CHATGPT"]
+API_KEYS_CHATGPT = [env["API_KEY_CHATGPT"], env["API_KEY_CHATGPT_1"]]
 bot = telebot.TeleBot(env["TG_BOT_TOKEN"])
 db_link = env["DB_LINK"]
 
@@ -73,6 +73,19 @@ def check_length(answer, list_of_answers):
         return list_of_answers
 
 
+def make_request(message):
+    engine = "text-davinci-003"
+    completion = openai.Completion.create(
+        engine=engine,
+        prompt=message.text,
+        temperature=0.5,
+        max_tokens=4000,
+    )
+    list_of_answers = check_length(completion.choices[0]["text"], [])
+    for piece_of_answer in list_of_answers:
+        bot.send_message(message.chat.id, piece_of_answer)
+
+
 @bot.message_handler(commands=["start"])
 def send_start(message):
     text = """Приветствую ✌
@@ -92,23 +105,21 @@ def send_start(message):
 
 @bot.message_handler(content_types=["text"])
 def send_msg_to_chatgpt(message):
-    engine = "text-davinci-003"
+    api_key_numb = 0
+    openai.api_key = API_KEYS_CHATGPT[api_key_numb]
     write_to_db(message)
     try:
-        completion = openai.Completion.create(
-            engine=engine,
-            prompt=message.text,
-            temperature=0.5,
-            max_tokens=2048,
-        )
-        list_of_answers = check_length(completion.choices[0]["text"], [])
-        for piece_of_answer in list_of_answers:
-            bot.send_message(message.chat.id, piece_of_answer)
+        make_request(message)
     except openai.error.RateLimitError:
-        bot.send_message(
-            message.chat.id,
-            "ChatGPT в данный момент перегружен запросами, пожалуйста повторите свой запрос чуть позже.",
-        )
+        if api_key_numb < len(API_KEYS_CHATGPT):
+            api_key_numb += 1
+            openai.api_key = API_KEYS_CHATGPT[api_key_numb]
+            make_request(message)
+        else:
+            bot.send_message(
+                message.chat.id,
+                "ChatGPT в данный момент перегружен запросами, пожалуйста повторите свой запрос чуть позже.",
+            )
     except ReadTimeout:
         bot.send_message(
             message.chat.id,

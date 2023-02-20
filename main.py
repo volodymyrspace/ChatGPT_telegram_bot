@@ -3,6 +3,7 @@ import openai
 import sqlite3
 import telebot
 from requests.exceptions import ReadTimeout
+from openai.error import RateLimitError, InvalidRequestError
 
 env = {
     **dotenv_values("/home/ChatGPT_telegram_bot/.env.prod"),
@@ -84,20 +85,41 @@ def check_length(answer, list_of_answers):
         return list_of_answers
 
 
-def make_request(message):
-    engine = "text-davinci-003"
-    completion = openai.Completion.create(
-        engine=engine,
-        prompt=message.text,
-        temperature=0.5,
-        max_tokens=3100,
-    )
-    list_of_answers = check_length(completion.choices[0]["text"], [])
-    if list_of_answers:
-        for piece_of_answer in list_of_answers:
-            bot.send_message(message.chat.id, piece_of_answer)
-    else:
-        make_request(message)
+def make_request(message, api_key_numb):
+    try:
+        engine = "text-davinci-003"
+        completion = openai.Completion.create(
+            engine=engine,
+            prompt=message.text,
+            temperature=0.5,
+            max_tokens=3100,
+        )
+        list_of_answers = check_length(completion.choices[0]["text"], [])
+        if list_of_answers:
+            for piece_of_answer in list_of_answers:
+                bot.send_message(message.chat.id, piece_of_answer)
+        else:
+            make_request(message, api_key_numb)
+    except RateLimitError:
+        if api_key_numb < len(API_KEYS_CHATGPT):
+            api_key_numb += 1
+            openai.api_key = API_KEYS_CHATGPT[api_key_numb]
+            make_request(message, api_key_numb)
+        else:
+            bot.send_message(
+                message.chat.id,
+                "ChatGPT в данный момент перегружен запросами, пожалуйста повторите свой запрос чуть позже.",
+            )
+    except ReadTimeout:
+        bot.send_message(
+            message.chat.id,
+            "ChatGPT в данный момент перегружен запросами, пожалуйста повторите свой запрос чуть позже.",
+        )
+    except InvalidRequestError:
+        bot.send_message(
+            message.chat.id,
+            "Максимальная длина контекста составляет около 3000 слов, ответ превысил длину контекста. Пожалуйста, повторите вопрос, либо перефразируйте его.",
+        )
 
 
 @bot.message_handler(commands=["start"])
@@ -122,28 +144,7 @@ def send_msg_to_chatgpt(message):
     api_key_numb = 0
     openai.api_key = API_KEYS_CHATGPT[api_key_numb]
     write_to_db(message)
-    try:
-        make_request(message)
-    except openai.error.RateLimitError:
-        if api_key_numb < len(API_KEYS_CHATGPT):
-            api_key_numb += 1
-            openai.api_key = API_KEYS_CHATGPT[api_key_numb]
-            make_request(message)
-        else:
-            bot.send_message(
-                message.chat.id,
-                "ChatGPT в данный момент перегружен запросами, пожалуйста повторите свой запрос чуть позже.",
-            )
-    except ReadTimeout:
-        bot.send_message(
-            message.chat.id,
-            "ChatGPT в данный момент перегружен запросами, пожалуйста повторите свой запрос чуть позже.",
-        )
-    except openai.error.InvalidRequestError:
-        bot.send_message(
-            message.chat.id,
-            "Максимальная длина контекста составляет около 3000 слов, ответ превысил длину контекста. Пожалуйста, повторите вопрос, либо перефразируйте его.",
-        )
+    make_request(message, api_key_numb)
 
 
 if __name__ == "__main__":

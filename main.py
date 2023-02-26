@@ -101,11 +101,15 @@ def make_request(message, api_key_numb):
         else:
             make_request(message, api_key_numb)
     except RateLimitError:
-        if api_key_numb < len(API_KEYS_CHATGPT):
+        if api_key_numb < len(API_KEYS_CHATGPT) - 1:
             api_key_numb += 1
             openai.api_key = API_KEYS_CHATGPT[api_key_numb]
             make_request(message, api_key_numb)
         else:
+            bot.send_message(
+                612063160,
+                f"Ключи закончились!!!",
+            )
             bot.send_message(
                 message.chat.id,
                 "ChatGPT в данный момент перегружен запросами, пожалуйста повторите свой запрос чуть позже.",

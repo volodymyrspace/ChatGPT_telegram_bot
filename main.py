@@ -92,19 +92,6 @@ def check_length(answer, list_of_answers):
         return list_of_answers
 
 
-def send_message_once(send_msg_func):
-    """Декоратор для отправки одинаковых сообщений в Телеграм один раз."""
-    msg = ""
-
-    def wrapper_func(bot, message):
-        nonlocal msg
-        if message != msg:
-            send_msg_func(bot, message)
-            msg = message
-
-    return wrapper_func
-
-
 def make_request(message, api_key_numb):
     try:
         engine = "text-davinci-003"

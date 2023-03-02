@@ -52,7 +52,7 @@ def write_to_db(message):
             )
         except:
             conn.commit()
-            cursor.close()
+            conn.close()
             bot.send_message(
                 612063160,
                 f"Ошибка при добавлении (INSERT) данных в базе Пользователь: {message.chat.id}",
@@ -74,13 +74,13 @@ def write_to_db(message):
             )
         except:
             conn.commit()
-            cursor.close()
+            conn.close()
             bot.send_message(
                 612063160,
                 f"Ошибка при добавлении (INSERT) данных в базе Пользователь: {message.chat.id}",
             )
     conn.commit()
-    cursor.close()
+    conn.close()
 
 
 def check_length(answer, list_of_answers):
@@ -90,6 +90,19 @@ def check_length(answer, list_of_answers):
     else:
         list_of_answers.append(answer[0:])
         return list_of_answers
+
+
+def send_message_once(send_msg_func):
+    """Декоратор для отправки одинаковых сообщений в Телеграм один раз."""
+    msg = ""
+
+    def wrapper_func(bot, message):
+        nonlocal msg
+        if message != msg:
+            send_msg_func(bot, message)
+            msg = message
+
+    return wrapper_func
 
 
 def make_request(message, api_key_numb):
@@ -113,10 +126,12 @@ def make_request(message, api_key_numb):
             openai.api_key = API_KEYS_CHATGPT[api_key_numb]
             make_request(message, api_key_numb)
         else:
-            bot.send_message(
-                612063160,
-                f"Ключи закончились!!!",
-            )
+            if not key_end:
+                bot.send_message(
+                    612063160,
+                    f"Ключи закончились!!!",
+                )
+            key_end = True
             bot.send_message(
                 message.chat.id,
                 "ChatGPT в данный момент перегружен запросами, пожалуйста повторите свой запрос чуть позже.",
@@ -131,6 +146,28 @@ def make_request(message, api_key_numb):
             message.chat.id,
             "Максимальная длина контекста составляет около 3000 слов, ответ превысил длину контекста. Пожалуйста, повторите вопрос, либо перефразируйте его.",
         )
+
+
+def create_table():
+    """Create table if not exists."""
+
+    conn = sqlite3.connect(db_link)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chat_id TEXT,
+            last_login TEXT,
+            username TEXT,
+            first_name TEXT,
+            last_name TEXT,
+            last_msg TEXT
+        );
+        """
+    )
+    conn.commit()
+    conn.close()
 
 
 @bot.message_handler(commands=["start"])
@@ -159,4 +196,6 @@ def send_msg_to_chatgpt(message):
 
 
 if __name__ == "__main__":
+    key_end = False
+    create_table()
     target = bot.infinity_polling()

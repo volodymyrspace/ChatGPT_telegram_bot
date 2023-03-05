@@ -41,6 +41,7 @@ API_KEYS_CHATGPT = [
     env["API_KEY_CHATGPT_27"],
     env["API_KEY_CHATGPT_28"],
     env["API_KEY_CHATGPT_29"],
+    env["API_KEY_CHATGPT_30"],
 ]
 bot = telebot.TeleBot(env["TG_BOT_TOKEN"])
 db_link = env["DB_LINK"]

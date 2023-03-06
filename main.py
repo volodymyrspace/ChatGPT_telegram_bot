@@ -5,6 +5,9 @@ import telebot
 from requests.exceptions import ReadTimeout
 from openai.error import RateLimitError, InvalidRequestError
 
+
+CHECK_KEY = "check_key_lskJHjf32"
+
 env = {
     **dotenv_values("/home/ChatGPT_telegram_bot/.env.prod"),
     **dotenv_values(".env.dev"),  # override
@@ -188,8 +191,27 @@ def send_start(message):
     bot.send_message(message.chat.id, text)
 
 
+def check_key(message):
+    key = message.text[19:]
+    openai.api_key = key
+    try:
+        engine = "text-davinci-003"
+        completion = openai.Completion.create(
+            engine=engine,
+            prompt=message.text,
+            temperature=0.5,
+            max_tokens=1000,
+        )
+        bot.send_message(message.chat.id, f"Ключ {key} работает.")
+    except:
+        bot.send_message(message.chat.id, f"Ключ {key} НЕ рабочий либо истек.")
+
+
 @bot.message_handler(content_types=["text"])
 def send_msg_to_chatgpt(message):
+    if CHECK_KEY == message.text[:19]:
+        check_key(message)
+        return
     api_key_numb = 0
     openai.api_key = API_KEYS_CHATGPT[api_key_numb]
     write_to_db(message)
